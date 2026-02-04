@@ -13,7 +13,7 @@ output_dir=$1
 processing_dir=$2
 
 # create header for output file
-echo -e "Fam file\tCovar set\tGene\tSKAT p Val\tTotal vars\t?\tCases with\tCases without\tControls With\tControls Without\tFET p\tOdds Ratio\tOR lower 95%\tOR upper 95%" > ${output_dir}/merged_burden_output.tsv
+echo -e "Fam file\tCovar set\tTest file\tGene\tSKAT p Val\tTotal vars\tCases with\tCases without\tControls With\tControls Without\tFET p\tOdds Ratio\tOR lower 95%\tOR upper 95%" > ${output_dir}/merged_burden_output.tsv
 
 # combine all results to the output file
 for file in ${processing_dir}/*/*_SKAT-output.txt; do

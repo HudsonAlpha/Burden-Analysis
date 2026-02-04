@@ -4,7 +4,11 @@ library(SKAT)
 
 # expects argument 1 to be a fam file, argument 2 to be a covariate file in plink format, and argument 3 to be a burden set
 # the burden set as well as the phenotype designation should be binary and 0/1 coded
-FAM_Cov<-Read_Plink_FAM_Cov(args[1],args[2],Is.binary=TRUE,flag1=1)
+# changed flag1 to 0 on 9-7-25 for 1/2 fam encoding
+
+#FAM_Cov<-Read_Plink_FAM_Cov(args[1],args[2],Is.binary=TRUE,flag1=0)
+
+FAM_Cov<-Read_Plink_FAM(args[1],Is.binary=TRUE,flag1=0)
 BurdenSet <- as.matrix(read.table(args[3], header=FALSE, sep ="\t"))
 
 Pheno<-FAM_Cov$Phenotype
@@ -23,27 +27,28 @@ for (covariate in covariate_columns) {
 # create the model formula string dynamically
 covariates_formula_part <- paste(covariate_columns, collapse=" + ")
 formula_str <- paste("Pheno ~", covariates_formula_part)
+#formula_str <- "Pheno ~ Sex"
 
-cat("Null model formula:", formula_str, "\n")
+cat("Null model formula:", formula_str, "+ Kinship Matrix", "\n")
 
 # convert the formula string into a formula object
 formula <- as.formula(formula_str)
 
 # fit the SKAT null model using the dynamically created formula
-obj <- SKAT_Null_Model(formula, data = FAM_Cov, out_type = "D", Adjustment = FALSE)
+obj <- SKAT_NULL_emmaX(formula, data = FAM_Cov, Kin.File = args[6])
 
 # perform SKAT with robust method
-SKATout<-SKATBinary_Robust(BurdenSet,obj,method="Burden")
+SKATout<-SKAT(BurdenSet, obj, method = "davies", r.corr = 1)
 SKATout$p.value
-SKATout$mac
+SKATout$test.snp.mac
 SKATout$param$n.marker
 
 
 # create a matrix to store results
-BigTable <- matrix(nrow = 1, ncol = 7)
+BigTable <- matrix(nrow = 1, ncol = 6)
 BigTable[1,1:3] <- args[1:3]
 BigTable[1,4] <- args[5]
-BigTable[1,5:7] <- c(SKATout$p.value, SKATout$mac, SKATout$param$n.marker)
+BigTable[1,5:6] <- c(SKATout$p.value, SKATout$param$n.marker)
 
 # SKAT part is done, now get effect size and run Fisher's Exact Test
 TotalControls <- as.data.frame(table(Pheno))[1,2]

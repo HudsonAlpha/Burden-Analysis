@@ -24,7 +24,7 @@ log_dir=$3
 module load cluster/bcftools
 module load cluster/htslib
 module load cluster/java
-module load cluster/python/3.7.6
+module load cluster/python/3.11.1
 
 input_vcf_fn=$(basename ${input_vcf})
 input_vcf_basename=${input_vcf_fn%.vcf.gz}
@@ -48,7 +48,7 @@ tabix -p vcf ${input_vcf_basename}_filtered.vcf.gz
 
 # decompose and normalize VCF with vt
 /cluster/software/vt-0.5772/bin/vt decompose ${input_vcf_basename}_filtered.vcf.gz -s -o + | \
-	/cluster/software/vt-0.5772/bin/vt normalize + -r /cluster/home/ncochran/Scripts/hg38.fa -o + | \
+	/cluster/software/vt-0.5772/bin/vt normalize + -n -r /cluster/home/ncochran/Scripts/hg38.fa -o + | \
 	/cluster/software/vt-0.5772/bin/vt uniq + -o + | \
 	/cluster/software/vt-0.5772/bin/vt sort + | \
 	sed -e "s/chr//" > ${input_vcf_basename}_vt-noCHR.vcf

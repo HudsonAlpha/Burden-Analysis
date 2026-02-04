@@ -4,8 +4,8 @@
 #SBATCH --mem=16G
 
 # check if the correct number of arguments is provided
-if [ "$#" -ne 4 ]; then
-    echo "Usage: $0 <input.vcf.gz> <input FAM> <input Cov> <coding or noncoding>"
+if [ "$#" -ne 4 ] && [ "$#" -ne 5 ]; then
+    echo "Usage: $0 <input.vcf.gz> <input FAM> <input Cov> <coding or noncoding> [<kinship matrix>]"
     exit 1
 fi
 
@@ -18,6 +18,7 @@ input_vcf=$1
 fam_input=$2
 cov_input=$3
 burden_type=$4
+kin_matrix=$5
 
 # vcf basename
 input_vcf_fn=$(basename ${input_vcf})
@@ -70,16 +71,32 @@ if [ $burden_type == "coding" ]; then
 	af_job_id=$(sbatch --parsable --array [1-24]%6 -p normal -N 1 -n 1 --job-name "annotate_and_filter" \
 		-o ${log_dir_path}/annotate_and_filter-%j_%A.out -e ${log_dir_path}/annotate_and_filter-%j_%A.err \
 		/cluster/home/jtaylor/scripts/Burden_Analysis/annotate_and_filter_coding.sh /cluster/home/jtaylor/reference_files/burden_analysis/chr_file.txt ${input_vcf} ${log_dir_path})
+	
+	if [ -n "${kin_matrix}" ]; then
+		
+		# run first batch of gene burden jobs
+		gene_burden_1_job=$(sbatch --parsable --array [1-10187]%20 -p normal -N 1 -n 1 --dependency=afterany:${af_job_id} --job-name gene_burden_1 \
+			-o ${log_dir_path}/gene_burden-%j_%A.out -e ${log_dir_path}/gene_burden-%j_%A.err /cluster/home/jtaylor/scripts/Burden_Analysis/gene_burden_coding.sh \
+			/cluster/home/jtaylor/reference_files/burden_analysis/gene_list_1.txt ${input_vcf_basename} ${processing_dir_path} ${filter_regions} ${fam_input} ${cov_input} ${kin_matrix})
 
-	# run first batch of gene burden jobs
-	gene_burden_1_job=$(sbatch --parsable --array [1-10187]%20 -p normal -N 1 -n 1 --dependency=afterany:${af_job_id} --job-name gene_burden_1 \
-		-o ${log_dir_path}/gene_burden-%j_%A.out -e ${log_dir_path}/gene_burden-%j_%A.err /cluster/home/jtaylor/scripts/Burden_Analysis/gene_burden_coding.sh \
-		/cluster/home/jtaylor/reference_files/burden_analysis/gene_list_1.txt ${input_vcf_basename} ${processing_dir_path} ${filter_regions} ${fam_input} ${cov_input})
+		# run second batch of gene burden jobs
+		gene_burden_2_job=$(sbatch --parsable --array [1-10187]%20 -p normal -N 1 -n 1 --dependency=afterany:${af_job_id} --job-name gene_burden_2 \
+			-o ${log_dir_path}/gene_burden-%j_%A.out -e ${log_dir_path}/gene_burden-%j_%A.err /cluster/home/jtaylor/scripts/Burden_Analysis/gene_burden_coding.sh \
+			/cluster/home/jtaylor/reference_files/burden_analysis/gene_list_2.txt ${input_vcf_basename} ${processing_dir_path} ${filter_regions} ${fam_input} ${cov_input} ${kin_matrix})
+		
+	else	
 
-	# run second batch of gene burden jobs
-	gene_burden_2_job=$(sbatch --parsable --array [1-10187]%20 -p normal -N 1 -n 1 --dependency=afterany:${af_job_id} --job-name gene_burden_2 \
-		-o ${log_dir_path}/gene_burden-%j_%A.out -e ${log_dir_path}/gene_burden-%j_%A.err /cluster/home/jtaylor/scripts/Burden_Analysis/gene_burden_coding.sh \
-		/cluster/home/jtaylor/reference_files/burden_analysis/gene_list_2.txt ${input_vcf_basename} ${processing_dir_path} ${filter_regions} ${fam_input} ${cov_input})
+		# run first batch of gene burden jobs
+		gene_burden_1_job=$(sbatch --parsable --array [1-10187]%20 -p normal -N 1 -n 1 --dependency=afterany:${af_job_id} --job-name gene_burden_1 \
+			-o ${log_dir_path}/gene_burden-%j_%A.out -e ${log_dir_path}/gene_burden-%j_%A.err /cluster/home/jtaylor/scripts/Burden_Analysis/gene_burden_coding.sh \
+			/cluster/home/jtaylor/reference_files/burden_analysis/gene_list_1.txt ${input_vcf_basename} ${processing_dir_path} ${filter_regions} ${fam_input} ${cov_input})
+
+		# run second batch of gene burden jobs
+		gene_burden_2_job=$(sbatch --parsable --array [1-10187]%20 -p normal -N 1 -n 1 --dependency=afterany:${af_job_id} --job-name gene_burden_2 \
+			-o ${log_dir_path}/gene_burden-%j_%A.out -e ${log_dir_path}/gene_burden-%j_%A.err /cluster/home/jtaylor/scripts/Burden_Analysis/gene_burden_coding.sh \
+			/cluster/home/jtaylor/reference_files/burden_analysis/gene_list_2.txt ${input_vcf_basename} ${processing_dir_path} ${filter_regions} ${fam_input} ${cov_input})
+				
+	fi		
 	
 elif [ $burden_type == "noncoding" ]; then 
 	
