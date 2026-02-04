@@ -12,6 +12,7 @@ usage() {
     echo "  -c  Input Covariates file"
     echo "  -b  Burden type ('coding' or 'noncoding')"
     echo "  -k  Use kinship matrix (flag, no input needed)"
+		echo "  -n  Input Null Model rds"
     echo "  -h  Display this help message"
     exit 1
 }
@@ -29,6 +30,7 @@ while getopts "v:f:c:b:k:h" opt; do
     k) use_kin_matrix=true
        kin_input="$OPTARG"
        ;;
+		n) null_mod="$OPTARG" ;;
     h) usage ;;
     \?) usage ;;
   esac
@@ -155,12 +157,12 @@ if [ $burden_type == "coding" ]; then
 		# run first batch of gene burden jobs
 		gene_burden_1_job=$(sbatch --parsable --array [1-10187]%20 -p normal -N 1 -n 1 --dependency=afterany:${af_job_id} --job-name gene_burden_1 \
 			-o ${log_dir_path}/gene_burden-%j_%A.out -e ${log_dir_path}/gene_burden-%j_%A.err /cluster/home/jtaylor/scripts/Burden_Analysis/gene_burden_coding.sh \
-			/cluster/home/jtaylor/reference_files/burden_analysis/gene_list_1.txt ${input_vcf_basename} ${processing_dir_path} ${filter_regions} ${test_fam} ${test_cov} ${test_kin_matrix})
+			/cluster/home/jtaylor/reference_files/burden_analysis/gene_list_1.txt ${input_vcf_basename} ${processing_dir_path} ${filter_regions} ${test_fam} ${test_cov} ${null_mod} ${test_kin_matrix})
 
 		# run second batch of gene burden jobs
 		gene_burden_2_job=$(sbatch --parsable --array [1-10187]%20 -p normal -N 1 -n 1 --dependency=afterany:${af_job_id} --job-name gene_burden_2 \
 			-o ${log_dir_path}/gene_burden-%j_%A.out -e ${log_dir_path}/gene_burden-%j_%A.err /cluster/home/jtaylor/scripts/Burden_Analysis/gene_burden_coding.sh \
-			/cluster/home/jtaylor/reference_files/burden_analysis/gene_list_2.txt ${input_vcf_basename} ${processing_dir_path} ${filter_regions} ${test_fam} ${test_cov} ${test_kin_matrix})
+			/cluster/home/jtaylor/reference_files/burden_analysis/gene_list_2.txt ${input_vcf_basename} ${processing_dir_path} ${filter_regions} ${test_fam} ${test_cov} ${null_mod} ${test_kin_matrix})
 		
 	else	
 

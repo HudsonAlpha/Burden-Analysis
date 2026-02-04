@@ -29,9 +29,10 @@ processing_dir_path=$3
 filter_regions=$4
 fam_input=$5
 cov_input=$6
+null_mod=$7
 
-if [ $# -eq 7 ]; then
-    kin_matrix=$7
+if [ $# -eq 8 ]; then
+    kin_matrix=$8
 else
     kin_matrix=""
 fi
@@ -143,11 +144,11 @@ for af in "${afs[@]}"; do
 		if [ -n "${kin_matrix}" ]; then
 			
 			# run the skat R script
-			Rscript ${skat_script_kin} ${fam_input} ${cov_input} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_${gene}_wGen_xPose-Sums-Collapse.txt ${working_dir}/${gene}AF-${af}_CADD-${c_score}_all ${gene} ${kin_matrix}
+			Rscript ${skat_script_kin} ${fam_input} ${cov_input} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_${gene}_wGen_xPose-Sums-Collapse.txt ${working_dir}/${gene}AF-${af}_CADD-${c_score}_all ${gene} ${kin_matrix} ${null_mod}
 		
-			Rscript ${skat_script_kin} ${fam_input} ${cov_input} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_coding_${gene}_wGen_xPose-Sums-Collapse.txt ${working_dir}/${gene}_AF-${af}_CADD-${c_score}_coding ${gene} ${kin_matrix}
+			Rscript ${skat_script_kin} ${fam_input} ${cov_input} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_coding_${gene}_wGen_xPose-Sums-Collapse.txt ${working_dir}/${gene}_AF-${af}_CADD-${c_score}_coding ${gene} ${kin_matrix} ${null_mod}
 		
-			Rscript ${skat_script_kin} ${fam_input} ${cov_input} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF_${gene}_wGen_xPose-Sums-Collapse.txt ${working_dir}/${gene}_AF-${af}_CADD-${c_score}_LOF ${gene} ${kin_matrix}
+			Rscript ${skat_script_kin} ${fam_input} ${cov_input} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF_${gene}_wGen_xPose-Sums-Collapse.txt ${working_dir}/${gene}_AF-${af}_CADD-${c_score}_LOF ${gene} ${kin_matrix} ${null_mod}
 		
 		else
 			

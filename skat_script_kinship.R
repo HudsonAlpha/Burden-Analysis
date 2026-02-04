@@ -11,34 +11,38 @@ library(SKAT)
 FAM_Cov<-Read_Plink_FAM(args[1],Is.binary=TRUE,flag1=0)
 BurdenSet <- as.matrix(read.table(args[3], header=FALSE, sep ="\t"))
 
-Pheno<-FAM_Cov$Phenotype
+null_model <- readRDS(args[5])
+
+### Commented out next several lines to just input null model from GWAS runs
+
+#Pheno<-FAM_Cov$Phenotype
 
 # determine the covariates' column names, excluding the phenotype column if it's included
-covariate_columns <- setdiff(names(FAM_Cov), c("FID", "IID", "PID", "MID", "Phenotype"))
+#covariate_columns <- setdiff(names(FAM_Cov), c("FID", "IID", "PID", "MID", "Phenotype"))
 
 # Remove covariate columns with all values being NA
 #covariate_columns <- covariate_columns[sapply(FAM_Cov[covariate_columns], function(x) !all(is.na(x)))]
 
 # dynamically create variables for each covariate
-for (covariate in covariate_columns) {
-  assign(covariate, FAM_Cov[[covariate]])
-}
+#for (covariate in covariate_columns) {
+  #assign(covariate, FAM_Cov[[covariate]])
+	#}
 
 # create the model formula string dynamically
-covariates_formula_part <- paste(covariate_columns, collapse=" + ")
-formula_str <- paste("Pheno ~", covariates_formula_part)
+#covariates_formula_part <- paste(covariate_columns, collapse=" + ")
+#formula_str <- paste("Pheno ~", covariates_formula_part)
 #formula_str <- "Pheno ~ Sex"
 
-cat("Null model formula:", formula_str, "+ Kinship Matrix", "\n")
+#cat("Null model formula:", formula_str, "+ Kinship Matrix", "\n")
 
 # convert the formula string into a formula object
-formula <- as.formula(formula_str)
+#formula <- as.formula(formula_str)
 
 # fit the SKAT null model using the dynamically created formula
-obj <- SKAT_NULL_emmaX(formula, data = FAM_Cov, Kin.File = args[6])
+#obj <- SKAT_NULL_emmaX(formula, data = FAM_Cov, Kin.File = args[6])
 
 # perform SKAT with robust method
-SKATout<-SKAT(BurdenSet, obj, method = "davies", r.corr = 1)
+SKATout<-SKAT(BurdenSet, null_model, method = "davies", r.corr = 1)
 SKATout$p.value
 SKATout$test.snp.mac
 SKATout$param$n.marker
