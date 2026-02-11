@@ -11,7 +11,7 @@ library(SKAT)
 FAM_Cov<-Read_Plink_FAM(args[1],Is.binary=TRUE,flag1=0)
 BurdenSet <- as.matrix(read.table(args[3], header=FALSE, sep ="\t"))
 
-null_model <- readRDS(args[5])
+null_model <- readRDS(args[7])
 
 ### Commented out next several lines to just input null model from GWAS runs
 

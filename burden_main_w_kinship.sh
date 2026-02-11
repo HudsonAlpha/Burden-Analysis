@@ -21,7 +21,7 @@ usage() {
 use_kin_matrix=false
 
 # Parse command-line options using getopts
-while getopts "v:f:c:b:k:h" opt; do
+while getopts "v:f:c:b:k:n:h" opt; do
   case $opt in
     v) input_vcf="$OPTARG" ;;
     f) fam_input="$OPTARG" ;;

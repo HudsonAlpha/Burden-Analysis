@@ -3,7 +3,7 @@
 #SBATCH -c 1
 #SBATCH --mem=16G
 
-if [ $# -ne 6 ] && [ $# -ne 7 ];
+if [ $# -ne 7 ] && [ $# -ne 8 ];
 then
     echo "Usage: <filename> <arg1> <arg2> <arg3> <arg4> <arg5> <arg6> [<arg7>]"
     exit 1
@@ -22,6 +22,7 @@ echo $gene
 # load modules
 module load bcftools
 module load cluster/java
+module load htslib
 
 # set variables for inputs
 input_vcf_basename=$2
@@ -40,11 +41,12 @@ fi
 # path for skat R script
 skat_script="/cluster/home/jtaylor/scripts/Burden_Analysis/skat_script.R"
 skat_script_kin="/cluster/home/jtaylor/scripts/Burden_Analysis/skat_script_kinship.R"
+gmmat_script="/cluster/home/jtaylor/scripts/Burden_Analysis/GMMAT_burden_script.R"
 
 scores="merged cadd fathmm genocanyon regulome eigen"
 
 # make a directory for the gene
-mkdir ${gene}
+mkdir -p ${gene}
 cd ${gene}
 
 # set working dir
@@ -74,6 +76,7 @@ cadd_scores=(10 20)
 for af in "${afs[@]}"; do
 	for c_score in "${cadd_scores[@]}"; do 
 	
+		<<"COMMENT"
 		bcftools view -R ${gene}.bed ${processing_dir_path}/${chr}/${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}.vcf.gz -Ov \
 			-o ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_${gene}.vcf --threads ${SLURM_JOB_CPUS_PER_NODE}
 		
@@ -136,9 +139,7 @@ for af in "${afs[@]}"; do
 		
 		awk '{if ($1=="0") print "0"; else print "1";}' ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF_${gene}_wGen_xPose-Sums.txt > \
 			${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF_${gene}_wGen_xPose-Sums-Collapse.txt
-	
-		
-		
+
 		micromamba activate /cluster/home/jtaylor/micromamba/envs/skat
 		
 		if [ -n "${kin_matrix}" ]; then
@@ -171,3 +172,57 @@ done
 rm *.vcf
 rm *_Gen.txt
 rm *_wGen_xPose-Sums.txt
+
+COMMENT
+
+		bcftools view -R ${gene}.bed ${processing_dir_path}/${chr}/${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}.vcf.gz -Oz \
+			-o ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_${gene}.vcf.gz --threads ${SLURM_JOB_CPUS_PER_NODE}
+
+		bcftools view -R ${gene}.bed ${processing_dir_path}/${chr}/${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_coding.vcf.gz -Oz \
+			-o ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_coding_${gene}.vcf.gz --threads ${SLURM_JOB_CPUS_PER_NODE}
+
+		bcftools view -R ${gene}.bed ${processing_dir_path}/${chr}/${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF.vcf.gz -Oz \
+			-o ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF_${gene}.vcf.gz --threads ${SLURM_JOB_CPUS_PER_NODE}
+
+
+
+		tabix -p vcf ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_${gene}.vcf.gz
+		tabix -p vcf ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_coding_${gene}.vcf.gz
+		tabix -p vcf ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF_${gene}.vcf.gz
+
+
+
+		bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\n' ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_${gene}.vcf.gz > \
+			${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_${gene}.txt
+
+		bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\n' ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_coding_${gene}.vcf.gz > \
+			${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_coding_${gene}.txt
+
+		bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\n' ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF_${gene}.vcf.gz > \
+			${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF_${gene}.txt
+
+
+
+		awk '{ print "Set1\t" gensub(/^chr/, "", "g", $1) "\t" $2 "\t" $3 "\t" $4 "\t" "1" }' ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_${gene}.txt > \
+			${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_${gene}_group.txt
+		awk '{ print "Set1\t" gensub(/^chr/, "", "g", $1) "\t" $2 "\t" $3 "\t" $4 "\t" "1" }' ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_coding_${gene}.txt > \
+			${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_coding_${gene}_group.txt
+		awk '{ print "Set1\t" gensub(/^chr/, "", "g", $1) "\t" $2 "\t" $3 "\t" $4 "\t" "1" }' ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF_${gene}.txt > \
+			${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF_${gene}_group.txt
+		
+
+		micromamba activate /cluster/home/jtaylor/micromamba/envs/gmmat_env
+					
+		# run the skat R script
+		Rscript ${gmmat_script} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_${gene}.vcf.gz ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_${gene}_group.txt \
+			${null_mod} ${gene}
+		
+		Rscript ${gmmat_script} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_coding_${gene}.vcf.gz ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_coding_${gene}_group.txt \
+			${null_mod} ${gene}
+		
+		Rscript ${gmmat_script} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF_${gene}.vcf.gz ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF_${gene}_group.txt \
+			${null_mod} ${gene}
+		
+	done
+	
+done
