@@ -3,7 +3,7 @@
 #SBATCH -c 1
 #SBATCH --mem=16G
 
-if [ $# -ne 7 ] && [ $# -ne 8 ];
+if [ $# -ne 7 ] && [ $# -ne 8 ]; ### change back to 6 and 7 if dropping null model input and just using SKAT
 then
     echo "Usage: <filename> <arg1> <arg2> <arg3> <arg4> <arg5> <arg6> [<arg7>]"
     exit 1
@@ -145,11 +145,11 @@ for af in "${afs[@]}"; do
 		if [ -n "${kin_matrix}" ]; then
 			
 			# run the skat R script
-			Rscript ${skat_script_kin} ${fam_input} ${cov_input} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_${gene}_wGen_xPose-Sums-Collapse.txt ${working_dir}/${gene}AF-${af}_CADD-${c_score}_all ${gene} ${kin_matrix} ${null_mod}
+			Rscript ${skat_script_kin} ${fam_input} ${cov_input} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_${gene}_wGen_xPose-Sums-Collapse.txt ${working_dir}/${gene}AF-${af}_CADD-${c_score}_all ${gene} ${kin_matrix}
 		
-			Rscript ${skat_script_kin} ${fam_input} ${cov_input} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_coding_${gene}_wGen_xPose-Sums-Collapse.txt ${working_dir}/${gene}_AF-${af}_CADD-${c_score}_coding ${gene} ${kin_matrix} ${null_mod}
+			Rscript ${skat_script_kin} ${fam_input} ${cov_input} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_coding_${gene}_wGen_xPose-Sums-Collapse.txt ${working_dir}/${gene}_AF-${af}_CADD-${c_score}_coding ${gene} ${kin_matrix}
 		
-			Rscript ${skat_script_kin} ${fam_input} ${cov_input} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF_${gene}_wGen_xPose-Sums-Collapse.txt ${working_dir}/${gene}_AF-${af}_CADD-${c_score}_LOF ${gene} ${kin_matrix} ${null_mod}
+			Rscript ${skat_script_kin} ${fam_input} ${cov_input} ${input_vcf_basename}_${chr}_annotated_AF-${af}_CADD-${c_score}_LOF_${gene}_wGen_xPose-Sums-Collapse.txt ${working_dir}/${gene}_AF-${af}_CADD-${c_score}_LOF ${gene} ${kin_matrix}
 		
 		else
 			

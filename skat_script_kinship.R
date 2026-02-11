@@ -8,14 +8,11 @@ library(SKAT)
 
 #FAM_Cov<-Read_Plink_FAM_Cov(args[1],args[2],Is.binary=TRUE,flag1=0)
 
+# sex only
 FAM_Cov<-Read_Plink_FAM(args[1],Is.binary=TRUE,flag1=0)
 BurdenSet <- as.matrix(read.table(args[3], header=FALSE, sep ="\t"))
 
-null_model <- readRDS(args[7])
-
-### Commented out next several lines to just input null model from GWAS runs
-
-#Pheno<-FAM_Cov$Phenotype
+Pheno<-FAM_Cov$Phenotype
 
 # determine the covariates' column names, excluding the phenotype column if it's included
 #covariate_columns <- setdiff(names(FAM_Cov), c("FID", "IID", "PID", "MID", "Phenotype"))
@@ -31,15 +28,16 @@ null_model <- readRDS(args[7])
 # create the model formula string dynamically
 #covariates_formula_part <- paste(covariate_columns, collapse=" + ")
 #formula_str <- paste("Pheno ~", covariates_formula_part)
-#formula_str <- "Pheno ~ Sex"
 
-#cat("Null model formula:", formula_str, "+ Kinship Matrix", "\n")
+formula_str <- "Pheno ~ Sex"
+
+cat("Null model formula:", formula_str, "+ Kinship Matrix", "\n")
 
 # convert the formula string into a formula object
-#formula <- as.formula(formula_str)
+formula <- as.formula(formula_str)
 
 # fit the SKAT null model using the dynamically created formula
-#obj <- SKAT_NULL_emmaX(formula, data = FAM_Cov, Kin.File = args[6])
+obj <- SKAT_NULL_emmaX(formula, data = FAM_Cov, Kin.File = args[6])
 
 # perform SKAT with robust method
 SKATout<-SKAT(BurdenSet, null_model, method = "davies", r.corr = 1)
